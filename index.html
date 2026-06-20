@@ -3,54 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="icon" href="logo.png" type="image/png">
     <title>我的眼睛！！！</title>
-    <link rel="icon" href="logo.png" type="image/png">
     <style>
-        /* 讓畫面變成深色背景（類似 Discord），並讓圖片絕對置中 */
+        /* 讓畫面變成深色背景，並讓圖片和計數器置中排列 */
         body {
             margin: 0;
             padding: 0;
             background-color: #2f3136; 
             display: flex;
+            flex-direction: column; /* 改成垂直排列 */
             justify-content: center;
             align-items: center;
             height: 100vh;
             overflow: hidden;
-            font-family: sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white; /* 文字變成白色 */
         }
 
         /* 圖片的樣式與點擊效果 */
         #click-image {
             max-width: 80%;
-            max-height: 80vh;
+            max-height: 60vh;
             cursor: pointer;
             border-radius: 15px;
             box-shadow: 0 8px 25px rgba(0,0,0,0.5);
-            transition: transform 0.1s ease; /* 點擊時縮小的動畫 */
+            transition: transform 0.1s ease;
         }
 
-        /* 當按下滑鼠時，圖片會微微縮小，製造「按鈕」的敲擊感 */
+        /* 當按下滑鼠時，圖片會微微縮小 */
         #click-image:active {
             transform: scale(0.95);
+        }
+
+        /* 計數器文字的專屬設計 */
+        .counter-container {
+            margin-top: 30px;
+            font-size: 24px;
+            font-weight: bold;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px 30px;
+            border-radius: 50px; /* 圓角背景 */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        /* 讓數字顏色特別亮，增加視覺爽度 */
+        #count-number {
+            color: #5865F2; /* Discord 的經典藍紫色 */
+            font-size: 36px;
+            margin: 0 5px;
         }
     </style>
 </head>
 <body>
 
     <img id="click-image" src="logo.png" alt="點擊我">
+    
+    <div class="counter-container">
+        小玉總共慘叫了 <span id="count-number">...</span> 次
+    </div>
 
     <audio id="my-audio" src="sound.mp3"></audio>
 
     <script>
         const image = document.getElementById('click-image');
         const audio = document.getElementById('my-audio');
+        const countDisplay = document.getElementById('count-number');
 
-        // 監聽圖片的點擊事件
-        image.addEventListener('click', () => {
-            audio.currentTime = 0; // 每次點擊都強制音訊回到 0 秒（這樣連續猛點可以一直重複發聲）
-            audio.play().catch(error => {
-                alert("瀏覽器阻擋了自動播放，請先在網頁任意地方點一下！");
+        // 【計數器資料庫設定】
+        // 這是你專屬的計數器分類名稱，只要這兩行不變，數字就會一直累積
+        const namespace = "Tama_mega"; 
+        const key = "total_clicks";
+
+        // 1. 網頁剛載入時：先去伺服器偷看目前累積到多少了
+        fetch(`https://api.counterapi.dev/v1/${namespace}/${key}`)
+            .then(response => response.json())
+            .then(data => {
+                // 把伺服器回傳的數字顯示在畫面上，如果是空的就顯示 0
+                countDisplay.innerText = data.count || 0;
+            })
+            .catch(() => {
+                countDisplay.innerText = 0;
             });
+
+        // 2. 當圖片被點擊時：播放聲音 ＆ 告訴伺服器 +1
+        image.addEventListener('click', () => {
+            // --- 播放聲音區塊 ---
+            audio.currentTime = 0; 
+            audio.play().catch(error => {
+                console.log("瀏覽器阻擋自動播放");
+            });
+
+            // --- 數字累加區塊 ---
+            // 在網址後面加上 /up，API 就會自動幫你的數字 +1，並回傳最新的總數
+            fetch(`https://api.counterapi.dev/v1/${namespace}/${key}/up`)
+                .then(response => response.json())
+                .then(data => {
+                    // 把畫面的數字立刻更新成最新的總數
+                    countDisplay.innerText = data.count;
+                })
+                .catch(err => console.error("計數器API連線失敗", err));
         });
     </script>
 </body>
