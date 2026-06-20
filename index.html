@@ -76,7 +76,9 @@
         const key = "total_clicks";
 
         // 1. 網頁剛載入時：先去伺服器偷看目前累積到多少了
-        fetch(`https://api.counterapi.dev/v1/${namespace}/${key}`)
+		fetch(`https://api.counterapi.dev/v1/${namespace}/${key}?t=${Date.now()}`, { 
+		    cache: 'no-store' 
+		    })
             .then(response => response.json())
             .then(data => {
                 // 把伺服器回傳的數字顯示在畫面上，如果是空的就顯示 0
@@ -96,8 +98,7 @@
 
             // --- 數字累加區塊 ---
             // 在網址後面加上 /up，API 就會自動幫你的數字 +1，並回傳最新的總數
-            fetch(`https://api.counterapi.dev/v1/${namespace}/${key}?t=${Date.now()}`, { 
-            cache: 'no-store'
+            fetch(`https://api.counterapi.dev/v1/${namespace}/${key}/up`)
                 .then(response => response.json())
                 .then(data => {
                     // 把畫面的數字立刻更新成最新的總數
