@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>點擊播放音效！</title>
+    <style>
+        /* 讓畫面變成深色背景（類似 Discord），並讓圖片絕對置中 */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #2f3136; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: sans-serif;
+        }
+
+        /* 圖片的樣式與點擊效果 */
+        #click-image {
+            max-width: 80%;
+            max-height: 80vh;
+            cursor: pointer;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+            transition: transform 0.1s ease; /* 點擊時縮小的動畫 */
+        }
+
+        /* 當按下滑鼠時，圖片會微微縮小，製造「按鈕」的敲擊感 */
+        #click-image:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+
+    <img id="click-image" src="logo.png" alt="點擊我">
+
+    <audio id="my-audio" src="sound.mp3"></audio>
+
+    <script>
+        const image = document.getElementById('click-image');
+        const audio = document.getElementById('my-audio');
+
+        // 監聽圖片的點擊事件
+        image.addEventListener('click', () => {
+            audio.currentTime = 0; // 每次點擊都強制音訊回到 0 秒（這樣連續猛點可以一直重複發聲）
+            audio.play().catch(error => {
+                alert("瀏覽器阻擋了自動播放，請先在網頁任意地方點一下！");
+            });
+        });
+    </script>
+</body>
+</html>
