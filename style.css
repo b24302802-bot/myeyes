@@ -1,0 +1,47 @@
+        /* 讓畫面變成深色背景，並讓圖片和計數器置中排列 */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #2f3136; 
+            display: flex;
+            flex-direction: column; /* 改成垂直排列 */
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white; /* 文字變成白色 */
+        }
+
+        /* 圖片的樣式與點擊效果 */
+        #clickable-image {
+            max-width: 80%;
+            max-height: 60vh;
+            cursor: pointer;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+            transition: transform 0.1s ease;
+        }
+
+        /* 當按下滑鼠時，圖片會微微縮小 */
+        #clickable-image:active {
+            transform: scale(0.95);
+        }
+
+        /* 計數器文字的專屬設計 */
+        .counter-container {
+            margin-top: 30px;
+            font-size: 24px;
+            font-weight: bold;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px 30px;
+            border-radius: 50px; /* 圓角背景 */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        /* 讓數字顏色特別亮，增加視覺爽度 */
+        #counter {
+            color: #5865F2; /* Discord 的經典藍紫色 */
+            font-size: 36px;
+            margin: 0 5px;
+        }
