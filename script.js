@@ -1,69 +1,136 @@
-// --- 1. Firebase 初始化設定 ---
-// 請將下方物件替換成你在 Firebase 後台拿到的實際 Config 內容
+let userId = localStorage.getItem('poptama_userId');
+let userName = localStorage.getItem('poptama_userName');
+
+if (!userId || !userName) {
+    userName = prompt("歡迎加入超級小玉杯：", "Guest");
+    if (!userName) userName = "Guest";
+
+    userId = 'user_' + Math.random().toString(36).substr(2, 9);
+
+    localStorage.setItem('poptama_userId', userId);
+    localStorage.setItem('poptama_userName', userName);
+}
+
+document.getElementById('player-name-display').textContent = userName;
+
+// 2. Firebase 初始化
 const firebaseConfig = {
-	  apiKey: "AIzaSyANVoHhbUbCQUFgG31V8EAWAm3gFYKvys8",
-	  authDomain: "helloworld-dafbf.firebaseapp.com",
-	  databaseURL: "https://helloworld-dafbf-default-rtdb.asia-southeast1.firebasedatabase.app",
-	  projectId: "helloworld-dafbf",
-	  storageBucket: "helloworld-dafbf.firebasestorage.app",
-	  messagingSenderId: "712697283373",
-	  appId: "1:712697283373:web:11c54d42c91cd7623a89a4",
-	  measurementId: "G-1F74GJVVFE"
+    apiKey: "AIzaSyANVoHhbUbCQUFgG31V8EAWAm3gFYKvys8",
+    authDomain: "helloworld-dafbf.firebaseapp.com",
+    databaseURL: "https://helloworld-dafbf-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "helloworld-dafbf",
+    storageBucket: "helloworld-dafbf.firebasestorage.app",
+    messagingSenderId: "712697283373",
+    appId: "1:712697283373:web:11c54d42c91cd7623a89a4"
 };
 
-// 初始化 Firebase
 firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
-const clicksRef = database.ref('click_stats/total_clicks'); // 設定資料庫的路徑名稱
+const db = firebase.database();
+// [新增] 改名按鈕事件監聽器
+document.getElementById('edit-name-btn').addEventListener('click', () => {
+    let newName = prompt("請輸入新的英雄暱稱：", userName);
+    // 確認玩家有輸入東西，且不是一堆空白
+    if (newName !== null && newName.trim() !== "") {
+        userName = newName.trim();
 
-// --- 2. 宣告網頁變數 ---
-const img = document.getElementById('clickable-image');
-const counterDisplay = document.getElementById('counter');
-const audio = document.getElementById('click-sound');
-
-let globalCount = 0;       // 畫面上顯示的總次數
-let pendingClicks = 0;     // 本地端剛點擊、尚未同步到雲端的次數
-
-// --- 3. 初始化：監聽資料庫的即時數據 ---
-// 使用 .on('value', ...) 當資料庫數字一變，全台灣所有打開這網頁的人畫面都會同步更新！
-clicksRef.on('value', (snapshot) => {
-    const data = snapshot.val();
-    // 如果資料庫是空的，預設為 0
-    const serverCount = data ? data : 0; 
-    
-    // 為了防止伺服器數字傳回來時，蓋掉使用者剛剛「正在瘋狂連點」還沒送出的數字
-    // 實際顯示的數字 = 雲端最新數字 + 本地還沒送出去的數字
-    globalCount = serverCount + pendingClicks;
-    counterDisplay.textContent = globalCount;
+        // 1. 更新瀏覽器本地記憶
+        localStorage.setItem('poptama_userName', userName);
+        // 2. 更新畫面上顯示的名字
+        document.getElementById('player-name-display').textContent = userName;
+        // 3. 立即更新到 Firebase 資料庫，讓排行榜同步變更
+        db.ref('users/' + userId + '/name').set(userName);
+    }
 });
 
-// --- 4. 處理點擊事件 ---
+
+// 3. 網頁元件綁定
+const img = document.getElementById('clickable-image');
+const globalCounterDisplay = document.getElementById('counter');
+const personalCounterDisplay = document.getElementById('personal-counter');
+const audio = document.getElementById('click-sound');
+const leaderboardList = document.getElementById('leaderboard-list');
+
+let globalCount = 0;
+let personalCount = 0;
+let pendingClicks = 0;
+
+// 4. 資料庫監聽：更新總數
+db.ref('click_stats/total_clicks').on('value', (snap) => {
+    globalCount = snap.val() || 0;
+    globalCounterDisplay.textContent = globalCount + pendingClicks;
+});
+
+// 5. 資料庫監聽：更新個人分數
+db.ref('users/' + userId + '/clicks').on('value', (snap) => {
+    personalCount = snap.val() || 0;
+    personalCounterDisplay.textContent = personalCount + pendingClicks;
+});
+
+// 6. 資料庫監聽：繪製排行榜
+db.ref('users').orderByChild('clicks').limitToLast(10).on('value', (snap) => {
+    let sortedUsers = [];
+    snap.forEach(childSnap => {
+        sortedUsers.push({ id: childSnap.key, ...childSnap.val() });
+    });
+    // 分數從高排到低
+    sortedUsers.reverse();
+
+    // 清空舊清單
+    leaderboardList.innerHTML = '';
+
+    // 透過 JavaScript 產生乾淨的 HTML 標籤
+    sortedUsers.forEach((user, index) => {
+        let rank = index + 1;
+        let isMe = user.id === userId;
+
+        // 決定前面的名次圈圈要套用什麼 CSS 樣式
+        let rankClass = "rank-number";
+        if (rank === 1) rankClass += " rank-1";
+        else if (rank === 2) rankClass += " rank-2";
+        else if (rank === 3) rankClass += " rank-3";
+
+        let li = document.createElement('li');
+        // 如果是自己，就加上 is-me 的 CSS 類別
+        li.className = isMe ? "rank-item is-me" : "rank-item";
+
+        li.innerHTML = `
+                    <div class="rank-info">
+                        <span class="${rankClass}">${rank}</span>
+                        <span class="rank-name">${user.name}</span>
+                    </div>
+                    <span class="rank-score">${(user.clicks || 0).toLocaleString()}</span>
+                `;
+        leaderboardList.appendChild(li);
+    });
+});
+
+// 7. 點擊與音效處理
 img.addEventListener('pointerdown', (e) => {
     e.preventDefault();
 
-    // 播放音效並重置時間
     audio.currentTime = 0;
     audio.play().catch(err => console.log("音效播放阻擋:", err));
 
-    // 本地端畫面立即反應
-    globalCount++;
     pendingClicks++;
-    counterDisplay.textContent = globalCount;
+
+    globalCounterDisplay.textContent = globalCount + pendingClicks;
+    personalCounterDisplay.textContent = personalCount + pendingClicks;
 });
 
-// --- 5. 解決狂按與覆蓋問題：定時批次同步 ---
+// 8. 每秒批次上傳至資料庫
 setInterval(() => {
     if (pendingClicks > 0) {
         const clicksToSync = pendingClicks;
-        pendingClicks = 0; // 立刻清空，準備紀錄下一秒的點擊
-        
-        // 【核心精髓】：使用 increment 讓資料庫自己做加法
-        // 這樣就算 A 和 B 同時送出點擊，資料庫也會排隊把它們加進去，不會互相覆蓋
-        clicksRef.set(firebase.database.ServerValue.increment(clicksToSync))
-            .catch((error) => {
-                console.error("同步失敗:", error);
-                // 如果同步失敗，把次數補回去，下一秒重新嘗試
-                pendingClicks += clicksToSync; 
-            });
+        pendingClicks = 0;
+
+        let updates = {};
+        updates['click_stats/total_clicks'] = firebase.database.ServerValue.increment(clicksToSync);
+        updates['users/' + userId + '/clicks'] = firebase.database.ServerValue.increment(clicksToSync);
+        updates['users/' + userId + '/name'] = userName;
+
+        db.ref().update(updates).catch(error => {
+            console.error("同步失敗", error);
+            pendingClicks += clicksToSync;
+        });
     }
-}, 1000); // 每 1000 毫秒（1秒）打包送出一次
+}, 1000);

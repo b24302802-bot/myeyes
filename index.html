@@ -6,21 +6,45 @@
 	<link rel="icon" href="logo.png" type="image/png">
 	<link rel="stylesheet" href="style.css">
     <title>我的眼睛！！！</title>
-    <!-- 引入 Tailwind CSS 快速排版 (負責左邊排行榜與整體響應式佈局) -->
-    <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 Firebase SDK (相容版) -->
 	<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
 <body>
+    <!-- 未來的 HTML 骨架 (這段保留在 index.html 裡) -->
+    <div class="app-container">
+        
+        <!-- === 左側：排行榜區塊 === -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🏆 超級小玉杯</h2>
+                <span id="player-name-display" class="player-name-badge"></span>
+                <button id="edit-name-btn" class="edit-name-btn" title="更改暱稱">✏️</button>
+            </div>
+            
+            <ul id="leaderboard-list" class="leaderboard-list">
+                <li style="text-align: center; color: #9ca3af; padding: 20px;">載入排行榜中...</li>
+            </ul>
+        </aside>
 
-    <img id="clickable-image" src="logo.png" alt="點擊我">
-    
-    <div class="counter-container">
-        小玉總共慘叫了 <span id="counter">...</span> 次
+        <!-- === 右側：主要遊戲區塊 === -->
+        <main class="game-area">
+            <div class="counter-container">
+                小玉總共慘叫了 <span id="counter">0</span> 次
+            </div>
+            
+            <div class="personal-container">
+                <span class="personal-label">你的貢獻:</span>
+                <span id="personal-counter">0</span>
+            </div>
+            <img id="clickable-image" src="logo.png" alt="點擊我">
+            <div class="beta">
+                this is beta test tama cup
+            </div>
+
+            <audio id="click-sound" src="sound.mp3" preload="auto"></audio>
+        </main>
     </div>
-
-    <audio id="click-sound" src="sound.mp3"></audio>
     <script src="script.js"></script>
 </body>
 </html>
